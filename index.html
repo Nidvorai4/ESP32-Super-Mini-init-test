@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Super Mini Web Flasher & Monitor</title>
-    <script type="module" src="https://unpkg.com"></script>
+    <!-- ИСПРАВЛЕНО: полный путь к esp-web-tools -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; text-align: center; }
         .container { background: white; max-width: 650px; margin: 40px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
@@ -12,10 +13,10 @@
         .subtitle { color: #666; margin-bottom: 25px; }
         label { display: block; font-weight: bold; text-align: left; margin-bottom: 5px; color: #444; }
         select { padding: 12px; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 25px; cursor: pointer; }
-        
+
         .terminal-header { text-align: left; background: #222; color: #aaa; padding: 6px 12px; font-family: monospace; font-size: 12px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; }
         .terminal { background: #1e1e1e; color: #39ff14; font-family: "Courier New", Courier, monospace; font-size: 14px; text-align: left; padding: 15px; height: 250px; overflow-y: scroll; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); white-space: pre-wrap; }
-        
+
         .btn-connect { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-connect:hover { background: #218838; }
         .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
@@ -28,8 +29,9 @@
 
 <div class="container">
     <h1>ESP32 Super Mini</h1>
-    <div class="subtitle">Универсальный веб-прошивальщик и динамический тюнер пинов</div>
-    
+    <div class="subtitle">Послепокукочная проверка платы</div>
+    <div class="version-badge">Версия прошивки: {TAG_VERSION}</div>
+
     <label for="board-select">1. Выберите вашу плату:</label>
     <select id="board-select">
         <option value="esp32_c3_supermini_test.bin">ESP32-C3 Super Mini</option>
@@ -48,27 +50,26 @@
         <span id="port-status" style="color: #ffc107;">Отключен</span>
     </div>
     <div id="terminal" class="terminal">Ожидание подключения платы для вывода логов...</div>
-    
+
     <div class="controls">
         <button id="connect-serial" class="btn-connect">Открыть Монитор Порта</button>
-        
-        <!-- ИНТЕРФЕЙС КОРРЕКТИРОВКИ ПИНОВ -->
+
         <div class="pin-panel">
-            <span>Синий:</span><input type="number" id="web-blue-pin" value="15">
+            <span>Обычный:</span><input type="number" id="web-blue-pin" value="15">
             <span>RGB:</span><input type="number" id="web-rgb-pin" value="8">
             <button id="send-pins-btn">Задать GPIO</button>
         </div>
-        
-        <button id="clear-terminal" style="padding: 5px 10px; cursor: pointer;">Очистить</button>
+
+        <button id="clear-terminal" style="padding: 5px 10px; cursor: pointer;">Очистить терминал</button>
     </div>
 </div>
 
 <script>
-    // === АВТОЗАМЕНЯЕМЫЕ НАСТРОЙКИ СЕРВЕРА (МЕНЯЮТСЯ РОБОТОМ GITHUB) ===
-    const GITHUB_USER = "ВАШ_НИКНЕЙМ";       // Замените на ваш логин
-    const GITHUB_REPO = "ИМЯ_РЕПОЗИТОРИЯ";   // Замените на имя репозитория
-    const TAG_VERSION = "{TAG_VERSION}";     // Робот сам заменит этот маркер на реальный тег версии
-    
+    // === НАСТРОЙКА ССЫЛОК НА ВАШИ РЕЛИЗЫ ===
+    const GITHUB_USER = "nidvorai4";
+    const GITHUB_REPO = "ESP32-Super-Mini-init-test";
+    const TAG_VERSION =  "{TAG_VERSION}";
+
     const select = document.getElementById('board-select');
     const button = document.getElementById('flash-button');
     const terminal = document.getElementById('terminal');
@@ -79,24 +80,30 @@
     const inputBlue = document.getElementById('web-blue-pin');
     const inputRgb = document.getElementById('web-rgb-pin');
 
+    // ИСПРАВЛЕНО: корректный URL и динамический chipFamily
     function updateManifest() {
         const binFile = select.value;
-        const fullUrl = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/releases/download/${TAG_VERSION}/${binFile}`;
-        
+        const fullUrl = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${TAG_VERSION}/${binFile}`;
+
+        let chipFamily = "ESP32-S3";
+        if (binFile.includes('c3'))      chipFamily = "ESP32-C3";
+        else if (binFile.includes('c6')) chipFamily = "ESP32-C6";
+        else if (binFile.includes('h2')) chipFamily = "ESP32-H2";
+        else if (binFile.includes('s3')) chipFamily = "ESP32-S3";
+
         button.manifest = {
             name: "ESP32 SuperMini Test",
             version: TAG_VERSION,
             builds: [{
-                chipFamily: "ESP32-S3",
+                chipFamily: chipFamily,
                 parts: [{ path: fullUrl, offset: 0 }]
             }]
         };
     }
-    
+
     select.addEventListener('change', updateManifest);
     updateManifest();
 
-    // Смена значений по умолчанию в полях ввода в зависимости от выбранной платы на сайте
     select.addEventListener('change', () => {
         if (select.value.includes('c3')) { inputBlue.value = 10; inputRgb.value = 8; }
         else if (select.value.includes('c6')) { inputBlue.value = 15; inputRgb.value = 8; }
@@ -104,16 +111,22 @@
         else if (select.value.includes('h2')) { inputBlue.value = 12; inputRgb.value = 8; }
     });
 
-    // === РАБОТА С ВЕБ-КОНСОЛЬЮ И ОТПРАВКОЙ КОМАНД ===
+    // === РАБОТА С ВЕБ-КОНСОЛЬЮ ===
     let port;
     let reader;
+    let keepReading = true;
 
     btnClear.addEventListener('click', () => { terminal.innerText = ""; });
 
     btnConnect.addEventListener('click', async () => {
         if (port) {
-            if (reader) { await reader.cancel(); reader = null; }
-            await port.close(); port = null;
+            keepReading = false;
+            if (reader) {
+                await reader.cancel();
+                reader = null;
+            }
+            await port.close();
+            port = null;
             portStatus.innerText = "Отключен"; portStatus.style.color = "#ffc107";
             btnConnect.innerText = "Открыть Монитор Порта"; return;
         }
@@ -121,16 +134,17 @@
         try {
             port = await navigator.serial.requestPort();
             await port.open({ baudRate: 115200 });
-            
+
             portStatus.innerText = "Подключен"; portStatus.style.color = "#39ff14";
             btnConnect.innerText = "Закрыть Монитор Порта";
             terminal.innerText = "--- Связь установлена. Ожидание логов... ---\n";
 
+            keepReading = true;
             const textDecoder = new TextDecoderStream();
             port.readable.pipeTo(textDecoder.writable);
             reader = textDecoder.readable.getReader();
 
-            while (true) {
+            while (keepReading) {
                 const { value, done } = await reader.read();
                 if (done) break;
                 if (value) {
@@ -144,20 +158,19 @@
         }
     });
 
-    // Отправка команды переназначения пинов по клику на кнопку сайта
     btnSendPins.addEventListener('click', async () => {
         if (!port || !port.writable) {
             alert("Сначала нажмите кнопку 'Открыть Монитор Порта'!");
             return;
         }
-        
+
         const command = `SET_PINS:${inputBlue.value},${inputRgb.value}\n`;
         const encoder = new TextEncoder();
         const writer = port.writable.getWriter();
-        
+
         await writer.write(encoder.encode(command));
         writer.releaseLock();
-        
+
         terminal.innerText += `\n[САЙТ -> ПЛАТА]: Отправлена команда смены GPIO: ${command}`;
     });
 </script>
