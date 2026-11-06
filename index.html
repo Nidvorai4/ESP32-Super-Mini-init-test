@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Super Mini Web Flasher & Monitor</title>
-    <!-- ИСПРАВЛЕНО: полный путь к esp-web-tools -->
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; text-align: center; }
         .container { background: white; max-width: 650px; margin: 40px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         h1 { color: #007bff; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 25px; }
+        .subtitle { color: #666; margin-bottom: 10px; }
+        .version-badge { display: inline-block; background: #e9f2ff; color: #0056b3; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 25px; }
         label { display: block; font-weight: bold; text-align: left; margin-bottom: 5px; color: #444; }
         select { padding: 12px; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 25px; cursor: pointer; }
 
@@ -19,7 +19,7 @@
 
         .btn-connect { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-connect:hover { background: #218838; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 10px; }
         .pin-panel { background: #222; color: white; padding: 4px 10px; border-radius: 4px; display: flex; gap: 8px; align-items: center; }
         .pin-panel input { width: 35px; background: #333; color: #fff; border: 1px solid #556; border-radius: 4px; text-align: center; padding: 2px; }
         .pin-panel button { background: #007bff; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
@@ -30,7 +30,7 @@
 <div class="container">
     <h1>ESP32 Super Mini</h1>
     <div class="subtitle">Послепокукочная проверка платы</div>
-    <div class="version-badge">Версия прошивки: {TAG_VERSION}</div>
+    <div class="version-badge">Версия прошивки: <span id="fw-version">загрузка…</span></div>
 
     <label for="board-select">1. Выберите вашу плату:</label>
     <select id="board-select">
@@ -55,7 +55,7 @@
         <button id="connect-serial" class="btn-connect">Открыть Монитор Порта</button>
 
         <div class="pin-panel">
-            <span>Обычный:</span><input type="number" id="web-blue-pin" value="15">
+            <span>Обычный:</span><input type="number" id="web-blue-pin" value="10">
             <span>RGB:</span><input type="number" id="web-rgb-pin" value="8">
             <button id="send-pins-btn">Задать GPIO</button>
         </div>
@@ -65,10 +65,26 @@
 </div>
 
 <script>
-    // === НАСТРОЙКА ССЫЛОК НА ВАШИ РЕЛИЗЫ ===
+    // === НАСТРОЙКА ===
     const GITHUB_USER = "nidvorai4";
     const GITHUB_REPO = "ESP32-Super-Mini-init-test";
-    const TAG_VERSION =  "{TAG_VERSION}";
+
+    let TAG_VERSION = "latest"; // перезапишется после fetch
+
+    async function loadLatestTag() {
+        try {
+            const res = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest`,
+                { headers: { "Accept": "application/vnd.github+json" } }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.tag_name; // например "v1.0.0"
+        } catch (e) {
+            console.warn("Не удалось получить тег релиза:", e);
+            return "latest";
+        }
+    }
 
     const select = document.getElementById('board-select');
     const button = document.getElementById('flash-button');
@@ -80,7 +96,6 @@
     const inputBlue = document.getElementById('web-blue-pin');
     const inputRgb = document.getElementById('web-rgb-pin');
 
-    // ИСПРАВЛЕНО: корректный URL и динамический chipFamily
     function updateManifest() {
         const binFile = select.value;
         const fullUrl = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${TAG_VERSION}/${binFile}`;
@@ -101,15 +116,26 @@
         };
     }
 
-    select.addEventListener('change', updateManifest);
-    updateManifest();
+    function updatePinsForBoard() {
+        const v = select.value;
+        if (v.includes('c3'))      { inputBlue.value = 10; inputRgb.value = 8; }
+        else if (v.includes('c6')) { inputBlue.value = 15; inputRgb.value = 8; }
+        else if (v.includes('s3')) { inputBlue.value = 47; inputRgb.value = 48; }
+        else if (v.includes('h2')) { inputBlue.value = 12; inputRgb.value = 8; }
+    }
 
     select.addEventListener('change', () => {
-        if (select.value.includes('c3')) { inputBlue.value = 10; inputRgb.value = 8; }
-        else if (select.value.includes('c6')) { inputBlue.value = 15; inputRgb.value = 8; }
-        else if (select.value.includes('s3')) { inputBlue.value = 47; inputRgb.value = 48; }
-        else if (select.value.includes('h2')) { inputBlue.value = 12; inputRgb.value = 8; }
+        updatePinsForBoard();
+        updateManifest();
     });
+
+    // === СТАРТ ===
+    (async () => {
+        TAG_VERSION = await loadLatestTag();
+        document.getElementById('fw-version').textContent = TAG_VERSION;
+        updatePinsForBoard();
+        updateManifest();
+    })();
 
     // === РАБОТА С ВЕБ-КОНСОЛЬЮ ===
     let port;
@@ -141,7 +167,7 @@
 
             keepReading = true;
             const textDecoder = new TextDecoderStream();
-            port.readable.pipeTo(textDecoder.writable);
+            port.readable.pipeTo(textDecoder.writable).catch(() => {});
             reader = textDecoder.readable.getReader();
 
             while (keepReading) {
