@@ -29,7 +29,7 @@ jobs:
 
     - name: Inject Release Tag into index.html
       run: |
-        sed -i "s/{TAG_VERSION}/${{ github.ref_name }}/g" index.html
+        sed -i 's/{TAG_VERSION}/${{ github.ref_name }}/g' index.html
 
     - name: Compile Firmware for all boards
       run: |
