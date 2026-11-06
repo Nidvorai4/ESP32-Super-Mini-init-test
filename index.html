@@ -98,7 +98,7 @@
 
     function updateManifest() {
         const binFile = select.value;
-        const fullUrl = `./firmware/${binFile}`;
+        const fullUrl = `/ESP32-Super-Mini-init-test/firmware/${binFile}`;
 
         let chipFamily = "ESP32-S3";
         if (binFile.includes('c3'))      chipFamily = "ESP32-C3";
@@ -107,18 +107,18 @@
         else if (binFile.includes('s3')) chipFamily = "ESP32-S3";
 
         // Вместо: button.manifest = { ... };
-// Сделайте так:
-const manifestObject = {
-    name: "ESP32 SuperMini Test",
-    version: TAG_VERSION,
-    builds: [{
-        chipFamily: chipFamily,
-        parts: [{ path: fullUrl, offset: 0 }]
-    }]
-};
+        // Сделайте так:
+        const manifestObject = {
+            name: "ESP32 SuperMini Test",
+            version: TAG_VERSION,
+            builds: [{
+                chipFamily: chipFamily,
+                parts: [{ path: fullUrl, offset: 0 }]
+            }]
+        };
 
-// Записываем манифест как JSON-строку в атрибут кнопки
-button.setAttribute("manifest", JSON.stringify(manifestObject));
+        const blob = new Blob([JSON.stringify(manifestObject)], { type: "application/json" });
+        button.manifest = URL.createObjectURL(blob);
     }
 
     function updatePinsForBoard() {
