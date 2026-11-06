@@ -60,7 +60,7 @@ void checkSerialCommands() {
 #include <WebServer.h>
 #include <DNSServer.h>
 
-const char* apPassword = "12345678Super"; 
+const char* apPassword = "12345678"; 
 WebServer server(80);
 DNSServer dnsServer;
 IPAddress clientIP;

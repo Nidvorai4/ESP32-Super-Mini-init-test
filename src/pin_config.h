@@ -8,8 +8,8 @@
 
 #elif defined(IS_BOARD_C3)
   #define BOARD_NAME "ESP32-C3 Super Mini"
-  #define DEFAULT_RGB_PIN 8     // Если у вас ревизия с GPIO 2, поменяйте тут или настройте через сайт
-  #define DEFAULT_BLUE_PIN 10
+  #define DEFAULT_RGB_PIN 10     // Если у вас ревизия с GPIO 2, поменяйте тут или настройте через сайт
+  #define DEFAULT_BLUE_PIN 8
   #define HAS_WIFI true
 
 #elif defined(IS_BOARD_S3)

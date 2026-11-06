@@ -1,209 +1,367 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Super Mini Web Flasher & Monitor</title>
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; text-align: center; }
-        .container { background: white; max-width: 650px; margin: 40px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h1 { color: #007bff; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 10px; }
-        .version-badge { display: inline-block; background: #e9f2ff; color: #0056b3; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 25px; }
-        label { display: block; font-weight: bold; text-align: left; margin-bottom: 5px; color: #444; }
-        select { padding: 12px; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 25px; cursor: pointer; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
 
-        .terminal-header { text-align: left; background: #222; color: #aaa; padding: 6px 12px; font-family: monospace; font-size: 12px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .terminal { background: #1e1e1e; color: #39ff14; font-family: "Courier New", Courier, monospace; font-size: 14px; text-align: left; padding: 15px; height: 250px; overflow-y: scroll; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); white-space: pre-wrap; }
+        .container {
+            background: white;
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
 
-        .btn-connect { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-connect:hover { background: #218838; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; flex-wrap: wrap; gap: 10px; }
-        .pin-panel { background: #222; color: white; padding: 4px 10px; border-radius: 4px; display: flex; gap: 8px; align-items: center; }
-        .pin-panel input { width: 35px; background: #333; color: #fff; border: 1px solid #556; border-radius: 4px; text-align: center; padding: 2px; }
-        .pin-panel button { background: #007bff; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        h1 {
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: #e9f2ff;
+            color: #0056b3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        select {
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .terminal-header {
+            text-align: left;
+            background: #222;
+            color: #aaa;
+            padding: 6px 12px;
+            font-family: monospace;
+            font-size: 12px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal {
+            background: #1e1e1e;
+            color: #39ff14;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            text-align: left;
+            padding: 15px;
+            height: 250px;
+            overflow-y: scroll;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            white-space: pre-wrap;
+        }
+
+        .btn-connect {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-connect:hover {
+            background: #218838;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pin-panel {
+            background: #222;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pin-panel input {
+            width: 35px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #556;
+            border-radius: 4px;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .pin-panel button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h1>ESP32 Super Mini</h1>
-    <div class="subtitle">Послепокукочная проверка платы</div>
-    <div class="version-badge">Версия прошивки: <span id="fw-version">загрузка…</span></div>
+    <div class="container">
+        <h1>ESP32 Super Mini</h1>
+        <div class="subtitle">Послепокукочная проверка платы</div>
+        <div class="version-badge">Версия прошивки: <span id="fw-version">загрузка…</span></div>
 
-    <label for="board-select">1. Выберите плату. Прошивка рассчитана на 4мб памяти.<br> Если на плате бомжацкие 2мб - может не стартануть</label>
-    <select id="board-select">
-        <option value="esp32_c3_supermini_test.bin">ESP32-C3 Super Mini</option>
-        <option value="esp32_c6_supermini_test.bin">ESP32-C6 Super Mini</option>
-        <option value="esp32_s3_supermini_test.bin">ESP32-S3 Super Mini</option>
-        <option value="esp32_h2_supermini_test.bin">ESP32-H2 Super Mini</option>
-    </select>
+        <label for="board-select">1. Выберите плату. Прошивка рассчитана на 4мб памяти.<br> Если на плате бомжацкие 2мб
+            - может не стартануть. <br> Иногда перед прошивкой надо перед подачей питания удержать boot, потом через пару сек отпустить </label>
+        <select id="board-select">
+            <option value="esp32_c3_supermini_test.bin">ESP32-C3 Super Mini</option>
+            <option value="esp32_c6_supermini_test.bin">ESP32-C6 Super Mini</option>
+            <option value="esp32_s3_supermini_test.bin">ESP32-S3 Super Mini</option>
+            <option value="esp32_h2_supermini_test.bin">ESP32-H2 Super Mini</option>
+        </select>
 
-    <label>2. Прошивка платы через WebUSB:</label>
-    <div style="margin-top: 10px;">
-        <esp-web-install-button id="flash-button"></esp-web-install-button>
-    </div>
-
-    <div class="terminal-header">
-        <span>Монитор порта (Serial Log)</span>
-        <span id="port-status" style="color: #ffc107;">Отключен</span>
-    </div>
-    <div id="terminal" class="terminal">Ожидание подключения платы для вывода логов...</div>
-
-    <div class="controls">
-        <button id="connect-serial" class="btn-connect">Открыть Монитор Порта</button>
-
-        <div class="pin-panel">
-            <span>Обычный:</span><input type="number" id="web-blue-pin" value="10">
-            <span>RGB:</span><input type="number" id="web-rgb-pin" value="8">
-            <button id="send-pins-btn">Задать GPIO</button>
+        <label>2. Прошивка платы через WebUSB:</label>
+        <div style="margin-top: 10px;">
+            <esp-web-install-button id="flash-button"></esp-web-install-button>
         </div>
 
-        <button id="clear-terminal" style="padding: 5px 10px; cursor: pointer;">Очистить терминал</button>
+        <div class="terminal-header">
+            <span>Монитор порта (Serial Log)</span>
+            <span id="port-status" style="color: #ffc107;">Отключен</span>
+        </div>
+        <div id="terminal" class="terminal">Ожидание подключения платы для вывода логов...</div>
+
+        <div class="controls">
+            <button id="connect-serial" class="btn-connect">Открыть Монитор Порта</button>
+
+            <div class="pin-panel">
+                <span>Обычный:</span><input type="number" id="web-blue-pin" value="10">
+                <span>RGB:</span><input type="number" id="web-rgb-pin" value="8">
+                <button id="send-pins-btn">Задать GPIO</button>
+            </div>
+
+            <button id="clear-terminal" style="padding: 5px 10px; cursor: pointer;">Очистить терминал</button>
+        </div>
     </div>
-</div>
 
-<script>
-    // === НАСТРОЙКА ===
-    const GITHUB_USER = "nidvorai4";
-    const GITHUB_REPO = "ESP32-Super-Mini-init-test";
+    <script>
+        // === НАСТРОЙКА ===
+        const GITHUB_USER = "nidvorai4";
+        const GITHUB_REPO = "ESP32-Super-Mini-init-test";
 
-    let TAG_VERSION = "latest"; // перезапишется после fetch
+        let TAG_VERSION = "latest"; // перезапишется после fetch
 
-    async function loadLatestTag() {
-        try {
-            const res = await fetch(
-                `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest`,
-                { headers: { "Accept": "application/vnd.github+json" } }
-            );
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            return data.tag_name; // например "v1.0.0"
-        } catch (e) {
-            console.warn("Не удалось получить тег релиза:", e);
-            return "latest";
-        }
-    }
-
-    const select = document.getElementById('board-select');
-    const button = document.getElementById('flash-button');
-    const terminal = document.getElementById('terminal');
-    const btnConnect = document.getElementById('connect-serial');
-    const btnClear = document.getElementById('clear-terminal');
-    const portStatus = document.getElementById('port-status');
-    const btnSendPins = document.getElementById('send-pins-btn');
-    const inputBlue = document.getElementById('web-blue-pin');
-    const inputRgb = document.getElementById('web-rgb-pin');
-
-    function updateManifest() {
-        const binFile = select.value;
-        const fullUrl = `/ESP32-Super-Mini-init-test/firmware/${binFile}`;
-
-        let chipFamily = "ESP32-S3";
-        if (binFile.includes('c3'))      chipFamily = "ESP32-C3";
-        else if (binFile.includes('c6')) chipFamily = "ESP32-C6";
-        else if (binFile.includes('h2')) chipFamily = "ESP32-H2";
-        else if (binFile.includes('s3')) chipFamily = "ESP32-S3";
-
-        // Вместо: button.manifest = { ... };
-        // Сделайте так:
-        const manifestObject = {
-            name: "ESP32 SuperMini Test",
-            version: TAG_VERSION,
-            builds: [{
-                chipFamily: chipFamily,
-                parts: [{ path: fullUrl, offset: 0 }]
-            }]
-        };
-
-        const blob = new Blob([JSON.stringify(manifestObject)], { type: "application/json" });
-        button.manifest = URL.createObjectURL(blob);
-    }
-
-    function updatePinsForBoard() {
-        const v = select.value;
-        if (v.includes('c3'))      { inputBlue.value = 10; inputRgb.value = 8; }
-        else if (v.includes('c6')) { inputBlue.value = 15; inputRgb.value = 8; }
-        else if (v.includes('s3')) { inputBlue.value = 47; inputRgb.value = 48; }
-        else if (v.includes('h2')) { inputBlue.value = 12; inputRgb.value = 8; }
-    }
-
-    select.addEventListener('change', () => {
-        updatePinsForBoard();
-        updateManifest();
-    });
-
-    // === СТАРТ ===
-    (async () => {
-        TAG_VERSION = await loadLatestTag();
-        document.getElementById('fw-version').textContent = TAG_VERSION;
-        updatePinsForBoard();
-        updateManifest();
-    })();
-
-    // === РАБОТА С ВЕБ-КОНСОЛЬЮ ===
-    let port;
-    let reader;
-    let keepReading = true;
-
-    btnClear.addEventListener('click', () => { terminal.innerText = ""; });
-
-    btnConnect.addEventListener('click', async () => {
-        if (port) {
-            keepReading = false;
-            if (reader) {
-                await reader.cancel();
-                reader = null;
+        async function loadLatestTag() {
+            try {
+                const res = await fetch(
+                    `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest`,
+                    { headers: { "Accept": "application/vnd.github+json" } }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                return data.tag_name; // например "v1.0.0"
+            } catch (e) {
+                console.warn("Не удалось получить тег релиза:", e);
+                return "latest";
             }
-            await port.close();
-            port = null;
-            portStatus.innerText = "Отключен"; portStatus.style.color = "#ffc107";
-            btnConnect.innerText = "Открыть Монитор Порта"; return;
         }
 
-        try {
-            port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
+        const select = document.getElementById('board-select');
+        const button = document.getElementById('flash-button');
+        const terminal = document.getElementById('terminal');
+        const btnConnect = document.getElementById('connect-serial');
+        const btnClear = document.getElementById('clear-terminal');
+        const portStatus = document.getElementById('port-status');
+        const btnSendPins = document.getElementById('send-pins-btn');
+        const inputBlue = document.getElementById('web-blue-pin');
+        const inputRgb = document.getElementById('web-rgb-pin');
 
-            portStatus.innerText = "Подключен"; portStatus.style.color = "#39ff14";
-            btnConnect.innerText = "Закрыть Монитор Порта";
-            terminal.innerText = "--- Связь установлена. Ожидание логов... ---\n";
+        function updateManifest() {
+            const binFile = select.value;
+            const fullUrl = `/ESP32-Super-Mini-init-test/firmware/${binFile}`;
 
-            keepReading = true;
-            const textDecoder = new TextDecoderStream();
-            port.readable.pipeTo(textDecoder.writable).catch(() => {});
-            reader = textDecoder.readable.getReader();
+            let chipFamily = "ESP32-S3";
+            if (binFile.includes('c3')) chipFamily = "ESP32-C3";
+            else if (binFile.includes('c6')) chipFamily = "ESP32-C6";
+            else if (binFile.includes('h2')) chipFamily = "ESP32-H2";
+            else if (binFile.includes('s3')) chipFamily = "ESP32-S3";
 
-            while (keepReading) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                if (value) {
-                    terminal.innerText += value;
-                    terminal.scrollTop = terminal.scrollHeight;
+            // Вместо: button.manifest = { ... };
+            // Сделайте так:
+            const manifestObject = {
+                name: "ESP32 SuperMini Test",
+                version: TAG_VERSION,
+                builds: [{
+                    chipFamily: chipFamily,
+                    parts: [{ path: fullUrl, offset: 0 }]
+                }]
+            };
+
+            const blob = new Blob([JSON.stringify(manifestObject)], { type: "application/json" });
+            button.manifest = URL.createObjectURL(blob);
+        }
+
+        function updatePinsForBoard() {
+            const v = select.value;
+            if (v.includes('c3')) { inputBlue.value = 10; inputRgb.value = 8; }
+            else if (v.includes('c6')) { inputBlue.value = 15; inputRgb.value = 8; }
+            else if (v.includes('s3')) { inputBlue.value = 47; inputRgb.value = 48; }
+            else if (v.includes('h2')) { inputBlue.value = 12; inputRgb.value = 8; }
+        }
+
+        select.addEventListener('change', () => {
+            updatePinsForBoard();
+            updateManifest();
+        });
+
+        // === СТАРТ ===
+        (async () => {
+            TAG_VERSION = await loadLatestTag();
+            document.getElementById('fw-version').textContent = TAG_VERSION;
+            updatePinsForBoard();
+            updateManifest();
+        })();
+
+        // === РАБОТА С ВЕБ-КОНСОЛЬЮ ===
+        let port;
+        let reader;
+        let keepReading = true;
+        let readLoopPromise = null;   // ← новое
+
+        btnClear.addEventListener('click', () => { terminal.innerText = ""; });
+
+        btnConnect.addEventListener('click', async () => {
+            // --- ЗАКРЫТИЕ ---
+            if (port) {
+                keepReading = false;
+
+                try {
+                    if (reader) {
+                        await reader.cancel();   // прерываем текущее чтение
+                    }
+                } catch (e) { /* ignore */ }
+
+                // ждём, пока цикл чтения реально завершится
+                if (readLoopPromise) {
+                    try { await readLoopPromise; } catch (e) { /* ignore */ }
+                    readLoopPromise = null;
                 }
+
+                try {
+                    await port.close();
+                } catch (e) {
+                    console.warn("Ошибка при закрытии порта:", e);
+                }
+
+                port = null;
+                reader = null;
+                portStatus.innerText = "Отключен";
+                portStatus.style.color = "#ffc107";
+                btnConnect.innerText = "Открыть Монитор Порта";
+                return;
             }
-        } catch (error) {
-            console.error(error);
-            terminal.innerText += `\n[ОШИБКА]: ${error.message}\n`;
-        }
-    });
 
-    btnSendPins.addEventListener('click', async () => {
-        if (!port || !port.writable) {
-            alert("Сначала нажмите кнопку 'Открыть Монитор Порта'!");
-            return;
-        }
+            // --- ОТКРЫТИЕ ---
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
 
-        const command = `SET_PINS:${inputBlue.value},${inputRgb.value}\n`;
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
+                portStatus.innerText = "Подключен";
+                portStatus.style.color = "#39ff14";
+                btnConnect.innerText = "Закрыть Монитор Порта";
+                terminal.innerText = "--- Связь установлена. Ожидание логов... ---\n";
 
-        await writer.write(encoder.encode(command));
-        writer.releaseLock();
+                keepReading = true;
+                const textDecoder = new TextDecoderStream();
+                port.readable.pipeTo(textDecoder.writable).catch(() => { });
+                reader = textDecoder.readable.getReader();
 
-        terminal.innerText += `\n[САЙТ -> ПЛАТА]: Отправлена команда смены GPIO: ${command}`;
-    });
-</script>
+                // запускаем цикл и сохраняем его Promise
+                readLoopPromise = (async () => {
+                    try {
+                        while (keepReading) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            if (value) {
+                                terminal.innerText += value;
+                                terminal.scrollTop = terminal.scrollHeight;
+                            }
+                        }
+                    } catch (e) {
+                        // при cancel() reader.read() бросает исключение — это нормально
+                    }
+                })();
+
+            } catch (error) {
+                console.error(error);
+                terminal.innerText += `\n[ОШИБКА]: ${error.message}\n`;
+                port = null;
+            }
+        });
+
+        btnSendPins.addEventListener('click', async () => {
+            if (!port || !port.writable) {
+                alert("Сначала нажмите кнопку 'Открыть Монитор Порта'!");
+                return;
+            }
+
+            const command = `SET_PINS:${inputBlue.value},${inputRgb.value}\n`;
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+
+            await writer.write(encoder.encode(command));
+            writer.releaseLock();
+
+            terminal.innerText += `\n[САЙТ -> ПЛАТА]: Отправлена команда смены GPIO: ${command}`;
+        });
+    </script>
 </body>
+
 </html>
