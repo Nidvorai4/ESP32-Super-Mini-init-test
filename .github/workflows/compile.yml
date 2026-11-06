@@ -40,6 +40,9 @@ jobs:
       run: |
         pio run
 
+    - name: Install esptool
+      run: pip install esptool
+
     - name: Merge Firmware Binaries
       run: |
         python -m esptool --chip esp32c3 merge_bin -o merged-c3.bin --flash_mode dio --flash_size 4MB \
@@ -62,7 +65,7 @@ jobs:
           .pio/build/super_mini_h2/bootloader.bin \
           .pio/build/super_mini_h2/partition-table.bin \
           .pio/build/super_mini_h2/firmware.bin
-          
+
     - name: Prepare Site for Pages
       run: |
         mkdir -p site/firmware
