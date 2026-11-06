@@ -3,15 +3,24 @@ name: Compile and Release Firmware
 on:
   push:
     tags:
-      - 'v*' # Срабатывает при создании тега версии, например v1.0.0, v1.1.0
-  workflow_dispatch: # Позволяет запустить сборку вручную кнопкой на сайте GitHub
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
-  contents: write # Дает право GitHub Actions создавать релизы и загружать файлы
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - name: Checkout code
@@ -31,25 +40,36 @@ jobs:
       run: |
         pio run
 
-    - name: Rename and Prepare Binaries
+    - name: Prepare Site for Pages
       run: |
-        mkdir -p output_bins
-        cp .pio/build/super_mini_c3/firmware.bin output_bins/esp32_c3_supermini_test.bin
-        cp .pio/build/super_mini_c6/firmware.bin output_bins/esp32_c6_supermini_test.bin
-        cp .pio/build/super_mini_s3/firmware.bin output_bins/esp32_s3_supermini_test.bin
-        cp .pio/build/super_mini_h2/firmware.bin output_bins/esp32_h2_supermini_test.bin
+        mkdir -p site/firmware
+        cp index.html site/
+        cp .pio/build/super_mini_c3/firmware.bin site/firmware/esp32_c3_supermini_test.bin
+        cp .pio/build/super_mini_c6/firmware.bin site/firmware/esp32_c6_supermini_test.bin
+        cp .pio/build/super_mini_s3/firmware.bin site/firmware/esp32_s3_supermini_test.bin
+        cp .pio/build/super_mini_h2/firmware.bin site/firmware/esp32_h2_supermini_test.bin
 
     - name: Create GitHub Release and Upload Assets
+      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          output_bins/esp32_c3_supermini_test.bin
-          output_bins/esp32_c6_supermini_test.bin
-          output_bins/esp32_s3_supermini_test.bin
-          output_bins/esp32_h2_supermini_test.bin
+          site/firmware/esp32_c3_supermini_test.bin
+          site/firmware/esp32_c6_supermini_test.bin
+          site/firmware/esp32_s3_supermini_test.bin
+          site/firmware/esp32_h2_supermini_test.bin
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: site
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
