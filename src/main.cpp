@@ -25,7 +25,7 @@ const char* deviceName = "ESP32-SuperMini-TEST";
 #include <WebServer.h>
 #include <DNSServer.h>
 
-const char* apPassword = "12345678Super"; 
+const char* apPassword = "12345678"; 
 WebServer server(80);
 DNSServer dnsServer;
 IPAddress clientIP;
