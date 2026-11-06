@@ -42,11 +42,27 @@ jobs:
 
     - name: Merge Firmware Binaries
       run: |
-        esptool --chip esp32c3 merge_bin -o merged-c3.bin --flash_mode dio --flash_size 4MB .pio/build/super_mini_c3/bootloader.bin .pio/build/super_mini_c3/partition-table.bin .pio/build/super_mini_c3/firmware.bin
-        esptool --chip esp32c6 merge_bin -o merged-c6.bin --flash_mode dio --flash_size 4MB .pio/build/super_mini_c6/bootloader.bin .pio/build/super_mini_c6/partition-table.bin .pio/build/super_mini_c6/firmware.bin
-        esptool --chip esp32s3 merge_bin -o merged-s3.bin --flash_mode dio --flash_size 4MB .pio/build/super_mini_s3/bootloader.bin .pio/build/super_mini_s3/partition-table.bin .pio/build/super_mini_s3/boot_app0.bin .pio/build/super_mini_s3/firmware.bin
-        esptool --chip esp32h2 merge_bin -o merged-h2.bin --flash_mode dio --flash_size 4MB .pio/build/super_mini_h2/bootloader.bin .pio/build/super_mini_h2/partition-table.bin .pio/build/super_mini_h2/firmware.bin
+        python -m esptool --chip esp32c3 merge_bin -o merged-c3.bin --flash_mode dio --flash_size 4MB \
+          .pio/build/super_mini_c3/bootloader.bin \
+          .pio/build/super_mini_c3/partition-table.bin \
+          .pio/build/super_mini_c3/firmware.bin
 
+        python -m esptool --chip esp32c6 merge_bin -o merged-c6.bin --flash_mode dio --flash_size 4MB \
+          .pio/build/super_mini_c6/bootloader.bin \
+          .pio/build/super_mini_c6/partition-table.bin \
+          .pio/build/super_mini_c6/firmware.bin
+
+        python -m esptool --chip esp32s3 merge_bin -o merged-s3.bin --flash_mode dio --flash_size 4MB \
+          .pio/build/super_mini_s3/bootloader.bin \
+          .pio/build/super_mini_s3/partition-table.bin \
+          .pio/build/super_mini_s3/boot_app0.bin \
+          .pio/build/super_mini_s3/firmware.bin
+
+        python -m esptool --chip esp32h2 merge_bin -o merged-h2.bin --flash_mode dio --flash_size 4MB \
+          .pio/build/super_mini_h2/bootloader.bin \
+          .pio/build/super_mini_h2/partition-table.bin \
+          .pio/build/super_mini_h2/firmware.bin
+          
     - name: Prepare Site for Pages
       run: |
         mkdir -p site/firmware
