@@ -47,25 +47,24 @@ jobs:
       run: |
         python -m esptool --chip esp32c3 merge-bin -o merged-c3.bin --flash-mode dio --flash-size 4MB \
           0x0 .pio/build/super_mini_c3/bootloader.bin \
-          0x8000 .pio/build/super_mini_c3/partition-table.bin \
+          0x8000 .pio/build/super_mini_c3/partitions.bin \
           0x10000 .pio/build/super_mini_c3/firmware.bin
 
         python -m esptool --chip esp32c6 merge-bin -o merged-c6.bin --flash-mode dio --flash-size 4MB \
           0x0 .pio/build/super_mini_c6/bootloader.bin \
-          0x8000 .pio/build/super_mini_c6/partition-table.bin \
+          0x8000 .pio/build/super_mini_c6/partitions.bin \
           0x10000 .pio/build/super_mini_c6/firmware.bin
 
         python -m esptool --chip esp32s3 merge-bin -o merged-s3.bin --flash-mode dio --flash-size 4MB \
           0x0 .pio/build/super_mini_s3/bootloader.bin \
-          0x8000 .pio/build/super_mini_s3/partition-table.bin \
-          0xe000 .pio/build/super_mini_s3/boot_app0.bin \
+          0x8000 .pio/build/super_mini_s3/partitions.bin \
           0x10000 .pio/build/super_mini_s3/firmware.bin
 
         python -m esptool --chip esp32h2 merge-bin -o merged-h2.bin --flash-mode dio --flash-size 4MB \
           0x0 .pio/build/super_mini_h2/bootloader.bin \
-          0x8000 .pio/build/super_mini_h2/partition-table.bin \
+          0x8000 .pio/build/super_mini_h2/partitions.bin \
           0x10000 .pio/build/super_mini_h2/firmware.bin
-          
+
     - name: Prepare Site for Pages
       run: |
         mkdir -p site/firmware
