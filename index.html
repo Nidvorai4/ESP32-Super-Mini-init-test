@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Super Mini Web Flasher & Monitor</title>
+    <!-- Подключаем официальный скрипт веб-инструментов от Espressif -->
+    <script type="module" src="https://unpkg.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; text-align: center; }
+        .container { background: white; max-width: 650px; margin: 40px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h1 { color: #007bff; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 25px; }
+        label { display: block; font-weight: bold; text-align: left; margin-bottom: 5px; color: #444; }
+        select { padding: 12px; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 25px; cursor: pointer; }
+        
+        /* Стили для нашей встроенной консоли */
+        .terminal-header { text-align: left; background: #222; color: #aaa; padding: 6px 12px; font-family: monospace; font-size: 12px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-top: 25px; display: flex; justify-content: space-between; }
+        .terminal { background: #1e1e1e; color: #39ff14; font-family: "Courier New", Courier, monospace; font-size: 14px; text-align: left; padding: 15px; height: 250px; overflow-y: scroll; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); white-space: pre-wrap; }
+        
+        .btn-connect { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-connect:hover { background: #218838; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ESP32 Super Mini</h1>
+    <div class="subtitle">Универсальный веб-прошивальщик и монитор порта</div>
+    
+    <label for="board-select">1. Выберите вашу плату:</label>
+    <select id="board-select">
+        <option value="esp32_c3_supermini_test.bin">ESP32-C3 Super Mini (Wi-Fi + Web)</option>
+        <option value="esp32_c6_supermini_test.bin">ESP32-C6 Super Mini (Wi-Fi + Web)</option>
+        <option value="esp32_s3_supermini_test.bin">ESP32-S3 Super Mini (Wi-Fi + Web)</option>
+        <option value="esp32_h2_supermini_test.bin">ESP32-H2 Super Mini (Bluetooth LE)</option>
+    </select>
+
+    <label>2. Прошивка платы через WebUSB:</label>
+    <div style="margin-top: 10px;">
+        <!-- Кнопка от Espressif, которая сама шьет плату -->
+        <esp-web-install-button id="flash-button"></esp-web-install-button>
+    </div>
+
+    <div class="terminal-header">
+        <span>Монитор порта (Serial Log)</span>
+        <span id="port-status" style="color: #ffc107;">Отключен</span>
+    </div>
+    <div id="terminal" class="terminal">Ожидание подключения платы для вывода логов...</div>
+    
+    <div class="controls">
+        <button id="connect-serial" class="btn-connect">Открыть Монитор Порта</button>
+        <button id="clear-terminal" style="padding: 5px 10px; cursor: pointer;">Очистить экран</button>
+    </div>
+</div>
+
+<script>
+    // === НАСТРОЙКА ССЫЛОК НА ВАШИ РЕЛИЗЫ ===
+    const GITHUB_USER = "ВАШ_НИКНЕЙМ";       // Замените на ваш логин GitHub
+    const GITHUB_REPO = "ИМЯ_РЕПОЗИТОРИЯ";   // Замените на имя вашего репозитория
+    const TAG_VERSION = "v1.0.1";            // Тег релиза, который только что собрался
+    
+    const select = document.getElementById('board-select');
+    const button = document.getElementById('flash-button');
+    const terminal = document.getElementById('terminal');
+    const btnConnect = document.getElementById('connect-serial');
+    const btnClear = document.getElementById('clear-terminal');
+    const portStatus = document.getElementById('port-status');
+
+    // Функция обновления манифеста для кнопки прошивки
+    function updateManifest() {
+        const binFile = select.value;
+        const fullUrl = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/releases/download/${TAG_VERSION}/${binFile}`;
+        
+        button.manifest = {
+            name: "ESP32 SuperMini Test",
+            version: TAG_VERSION,
+            builds: [{
+                chipFamily: "ESP32-S3", // Скрипт сам определит реальный чип, это базовая разметка
+                parts: [{ path: fullUrl, offset: 0 }]
+            }]
+        };
+    }
+    
+    select.addEventListener('change', updateManifest);
+    updateManifest(); // Первичная настройка при загрузке страницы
+
+    // === ЛОГИКА РАБОТЫ С МОНИТОРОМ ПОРТА (Web Serial API) ===
+    let port;
+    let reader;
+
+    btnClear.addEventListener('click', () => { terminal.innerText = ""; });
+
+    btnConnect.addEventListener('click', async () => {
+        if (port) {
+            // Если порт уже открыт — закрываем его
+            if (reader) {
+                await reader.cancel();
+                reader = null;
+            }
+            await port.close();
+            port = null;
+            portStatus.innerText = "Отключен";
+            portStatus.style.color = "#ffc107";
+            btnConnect.innerText = "Открыть Монитор Порта";
+            return;
+        }
+
+        try {
+            // Запрашиваем у пользователя выбор COM-порта в браузере
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            
+            portStatus.innerText = "Подключен (115200)";
+            portStatus.style.color = "#39ff14";
+            btnConnect.innerText = "Закрыть Монитор Порта";
+            terminal.innerText = "--- Порт открыт. Ожидание данных с платы... ---\n";
+
+            // Читаем поток данных из текстового лога ESP32
+            const textDecoder = new TextDecoderStream();
+            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+            reader = textDecoder.readable.getReader();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (value) {
+                    terminal.innerText += value;
+                    terminal.scrollTop = terminal.scrollHeight; // Автопрокрутка вниз
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            terminal.innerText += `\n[ОШИБКА ПОДКЛЮЧЕНИЯ]: ${error.message}\n`;
+        }
+    });
+</script>
+</body>
+</html>
